@@ -34,7 +34,8 @@ RUN python -c "import torch; print(f'PyTorch: {torch.__version__}'); print(f'CUD
     python -c "import accelerate; print(f'Accelerate: {accelerate.__version__}')" && \
     python -c "import rfdetr; print(f'RFDETR installed successfully')" || echo "RFDETR check completed"
 
-# Copy training script
+# Copy src module and training script
+COPY src/__init__.py /opt/ml/code/src/__init__.py
 COPY src/train_rfdetr_aws.py /opt/ml/code/train.py
 
 # Make script executable

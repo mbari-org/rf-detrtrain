@@ -1,0 +1,102 @@
+{
+    "images": [
+        {
+            "id": 0,
+            "file_name": "e3f97e14-fe14-440a-aff9-58812128dd3d_105021.png",
+            "width": 2048,
+            "height": 1080
+        },
+        {
+            "id": 9,
+            "file_name": "1cd3976f-4253-4e07-a57e-2b239064726b_75896.png",
+            "width": 2048,
+            "height": 1080
+        },
+        {
+            "id": 47,
+            "file_name": "1cd3976f-4253-4e07-a57e-2b239064726b_301904.png",
+            "width": 2048,
+            "height": 1080
+        },
+        {
+            "id": 57,
+            "file_name": "33093a7a-ab66-4c44-b192-1ebd425ea55e_267910.png",
+            "width": 2048,
+            "height": 1080
+        }
+    ],
+    "annotations": [
+        {
+            "id": 49,
+            "image_id": 47,
+            "category_id": 1,
+            "bbox": [
+                1195.0,
+                22.0,
+                63.0,
+                75.0
+            ],
+            "area": 4725.0,
+            "iscrowd": 0
+        },
+        {
+            "id": 0,
+            "image_id": 0,
+            "category_id": 1,
+            "bbox": [
+                1310.0,
+                380.0,
+                250.0,
+                116.0
+            ],
+            "area": 29000.0,
+            "iscrowd": 0
+        },
+        {
+            "id": 59,
+            "image_id": 57,
+            "category_id": 0,
+            "bbox": [
+                1729.0,
+                451.0,
+                60.0,
+                29.0
+            ],
+            "area": 1740.0,
+            "iscrowd": 0
+        },
+        {
+            "id": 10,
+            "image_id": 9,
+            "category_id": 1,
+            "bbox": [
+                726.0,
+                814.0,
+                209.0,
+                262.0
+            ],
+            "area": 54758.0,
+            "iscrowd": 0
+        }
+    ],
+    "categories": [
+        {
+            "id": 0,
+            "name": "Procymbulia",
+            "supercategory": "none"
+        },
+        {
+            "id": 1,
+            "name": "Chiroteuthis calyx",
+            "supercategory": "none"
+        }
+    ],
+    "info": {
+        "description": "Dataset split",
+        "url": "",
+        "version": "1.0",
+        "year": 2025,
+        "contributor": "",
+        "date_created": "2024-01-01"
+    }
+}

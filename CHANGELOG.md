@@ -2,6 +2,17 @@
 
 
 
+## v0.2.0 (2025-10-16)
+
+### Feature
+
+* feat: add volume size pass through ([`a4dc912`](https://github.com/mbari-org/rf-detrtrain/commit/a4dc91229bc2e0f8bcde317d925ae624b932bb8d))
+
+### Fix
+
+* fix: fix entrypoint error ([`319d849`](https://github.com/mbari-org/rf-detrtrain/commit/319d84952a0b2713365df40b916f86e45775e889))
+
+
 ## v0.1.1 (2025-10-16)
 
 ### Fix

@@ -2,6 +2,17 @@
 
 
 
+## v0.2.1 (2025-10-16)
+
+### Documentation
+
+* docs: add volume size pass through docs ([`0dd8600`](https://github.com/mbari-org/rf-detrtrain/commit/0dd860053d5e910210b0c05a6f48a72cfdc8e249))
+
+### Fix
+
+* fix: correct coco for small sample and pass through entrypoint ([`8fac296`](https://github.com/mbari-org/rf-detrtrain/commit/8fac296e3b6f3b76c0c74d46ac5efa1ce9349aa2))
+
+
 ## v0.2.0 (2025-10-16)
 
 ### Feature

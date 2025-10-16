@@ -28,6 +28,7 @@ export BATCH_SIZE=8
 export GRAD_ACCUM_STEPS=2
 export MODEL_SIZE="large"
 export INSTANCE_TYPE="ml.p3.2xlarge"
+export VOLUME_SIZE=100  # EBS volume size in GB
 
 # Docker image configuration
 export IMAGE_NAME="rfdetr-sagemaker-training"
@@ -52,7 +53,8 @@ python src/submit_sagemaker_job.py \
   --batch-size ${BATCH_SIZE} \
   --grad-accum-steps ${GRAD_ACCUM_STEPS} \
   --model-size ${MODEL_SIZE} \
-  --instance-type ${INSTANCE_TYPE}
+  --instance-type ${INSTANCE_TYPE} \
+  --volume-size ${VOLUME_SIZE}
 
 echo "Training job submitted successfully!"
 echo "Monitor at: https://console.aws.amazon.com/sagemaker/home?region=${AWS_REGION}#/jobs"

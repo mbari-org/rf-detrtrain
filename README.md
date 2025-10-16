@@ -93,7 +93,8 @@ python src/submit_sagemaker_job.py \
   --epochs 50 \
   --batch-size 8 \
   --model-size large \
-  --instance-type ml.p3.2xlarge
+  --instance-type ml.p3.2xlarge \
+  --volume-size 100
 ```
 
 **Note**: A sample dataset is provided in `test_data/sample/` for testing. For production, use your own dataset.

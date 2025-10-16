@@ -77,7 +77,8 @@ python src/submit_sagemaker_job.py \
   --skip-build \
   --epochs 50 \
   --batch-size 8 \
-  --instance-type ml.p3.2xlarge
+  --instance-type ml.p3.2xlarge \
+  --volume-size 100
 ```
 
 ## Monitor Training

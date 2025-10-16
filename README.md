@@ -197,6 +197,18 @@ Available hyperparameters:
 | `model-size` | str | 'large' | Model size: 'large' or 'medium' |
 | `learning-rate` | float | None | Learning rate (uses model default if not set) |
 
+## Configuration Parameters
+
+Additional configuration options for `submit_sagemaker_job.py`:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `--volume-size` | int | 100 | EBS volume size in GB for the training instance |
+| `--instance-type` | str | 'ml.p3.2xlarge' | SageMaker instance type |
+| `--instance-count` | int | 1 | Number of instances for distributed training |
+| `--max-run` | int | 86400 | Maximum training time in seconds (24 hours) |
+| `--job-name` | str | auto | Training job name (auto-generated if not specified) |
+
 ## Monitoring
 
 ### View Training Progress

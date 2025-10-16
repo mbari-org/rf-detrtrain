@@ -55,5 +55,5 @@ RUN mkdir -p /opt/ml/model && \
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import torch; import rfdetr" || exit 1
 
-# Default command (will be overridden by SageMaker)
-ENTRYPOINT ["python", "/opt/ml/code/train.py"]
+# SageMaker will use the SAGEMAKER_PROGRAM env var to run the training script
+# No ENTRYPOINT needed - the base DLC image handles execution

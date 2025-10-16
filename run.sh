@@ -23,7 +23,6 @@ Commands:
 
 Examples:
   ./run.sh build                              # Build Docker image
-  ./run.sh test                               # Quick CPU test
   ./run.sh test-gpu                           # Full GPU test
   ./run.sh deploy                             # Build, upload, and submit training
   ./run.sh upload /tmp/test_dataset           # Upload data to S3
@@ -39,11 +38,6 @@ case "${1:-}" in
     build)
         echo "Building Docker image..."
         "${SCRIPT_DIR}/scripts/build_docker.sh" "${@:2}"
-        ;;
-
-    test)
-        echo "Running local CPU tests..."
-        "${SCRIPT_DIR}/scripts/test_docker_local_cpu.sh" rfdetr-sagemaker-training latest /tmp/test_dataset
         ;;
 
     test-gpu)

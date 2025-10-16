@@ -331,6 +331,7 @@ For issues specific to:
 
 ## References
 
+- [Roboflow RF-DETR](https://github.com/roboflow/rf-detr)
 - [AWS SageMaker Python SDK](https://sagemaker.readthedocs.io/)
 - [SageMaker Training Toolkit](https://github.com/aws/sagemaker-training-toolkit)
 - [SageMaker Docker Containers](https://github.com/aws/deep-learning-containers)

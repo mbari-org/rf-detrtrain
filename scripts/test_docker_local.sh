@@ -89,6 +89,7 @@ docker run --rm -it \
     -e SM_MODEL_DIR=/opt/ml/model \
     -e SM_OUTPUT_DATA_DIR=/opt/ml/output \
     ${IMAGE_NAME}:${IMAGE_TAG} \
+    python /opt/ml/code/train.py \
     --epochs 2 \
     --batch-size 2 \
     --grad-accum-steps 1 \

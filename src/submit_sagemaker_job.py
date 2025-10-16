@@ -204,6 +204,7 @@ def submit_training_job(
 
     # Create estimator
     estimator = Estimator(
+        entry_point="src/train_rfdetr_aws.py",
         image_uri=image_uri,
         role=role_arn,
         instance_count=instance_count,

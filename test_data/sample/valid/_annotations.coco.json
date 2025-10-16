@@ -1,330 +1,83 @@
 {
-    "images": [
-        {
-            "id": 3,
-            "file_name": "e3f97e14-fe14-440a-aff9-58812128dd3d_323951.png",
-            "width": 2048,
-            "height": 1080
-        },
-        {
-            "id": 6,
-            "file_name": "658b652a-936a-4dc6-b752-2c408163427b_208074.png",
-            "width": 2048,
-            "height": 1080
-        },
-        {
-            "id": 8,
-            "file_name": "bf24dae0-fc12-4ce8-8fd0-12d77095203e_274936.png",
-            "width": 2048,
-            "height": 1080
-        },
-        {
-            "id": 13,
-            "file_name": "c1c1131d-3265-4597-bcf6-efcb45b11480_320007.png",
-            "width": 2048,
-            "height": 1080
-        },
-        {
-            "id": 17,
-            "file_name": "0c799e6a-00c9-40bc-94f1-efbab453e927_133118.png",
-            "width": 2048,
-            "height": 1080
-        },
-        {
-            "id": 25,
-            "file_name": "1cd3976f-4253-4e07-a57e-2b239064726b_299696.png",
-            "width": 2048,
-            "height": 1080
-        },
-        {
-            "id": 29,
-            "file_name": "1cd3976f-4253-4e07-a57e-2b239064726b_75696.png",
-            "width": 2048,
-            "height": 1080
-        },
-        {
-            "id": 31,
-            "file_name": "28e1896e-7cc3-4724-85d0-8d78ef9772ff_355088.png",
-            "width": 2048,
-            "height": 1080
-        },
-        {
-            "id": 32,
-            "file_name": "1cd3976f-4253-4e07-a57e-2b239064726b_70768.png",
-            "width": 2048,
-            "height": 1080
-        },
-        {
-            "id": 41,
-            "file_name": "077ca5aa-a0e6-45b9-b0ea-4ae174e1ccdb_23354.png",
-            "width": 2048,
-            "height": 1080
-        },
-        {
-            "id": 46,
-            "file_name": "5903e780-bf36-44fa-9244-337756ec2451_155880.png",
-            "width": 2048,
-            "height": 1080
-        },
-        {
-            "id": 58,
-            "file_name": "90ed4750-3f66-4e78-be52-f09373dadae5_5723.png",
-            "width": 2048,
-            "height": 1080
-        },
-        {
-            "id": 70,
-            "file_name": "5bcf71d7-4f14-4dfd-94c9-74bbeea925e1_10487.png",
-            "width": 2048,
-            "height": 1080
-        },
-        {
-            "id": 71,
-            "file_name": "66697b6c-620b-436a-8bd1-293463d3d864_150120.png",
-            "width": 2048,
-            "height": 1080
-        },
-        {
-            "id": 72,
-            "file_name": "1CB8374B-4FB5-4E47-A417-86E764DBE47A_187306.png",
-            "width": 2048,
-            "height": 1080
-        },
-        {
-            "id": 74,
-            "file_name": "6be17478-7a87-409c-8468-2a7bac28042a_325887.png",
-            "width": 2048,
-            "height": 1080
-        }
-    ],
-    "annotations": [
-        {
-            "id": 14,
-            "image_id": 13,
-            "category_id": 1,
-            "bbox": [
-                1728.0,
-                187.0,
-                168.0,
-                197.0
-            ],
-            "area": 33096.0,
-            "iscrowd": 0
-        },
-        {
-            "id": 60,
-            "image_id": 58,
-            "category_id": 0,
-            "bbox": [
-                1356.0,
-                46.0,
-                57.0,
-                42.0
-            ],
-            "area": 2394.0,
-            "iscrowd": 0
-        },
-        {
-            "id": 7,
-            "image_id": 6,
-            "category_id": 1,
-            "bbox": [
-                1205.0,
-                997.0,
-                187.0,
-                74.0
-            ],
-            "area": 13838.0,
-            "iscrowd": 0
-        },
-        {
-            "id": 72,
-            "image_id": 70,
-            "category_id": 0,
-            "bbox": [
-                363.0,
-                358.0,
-                50.0,
-                35.0
-            ],
-            "area": 1750.0,
-            "iscrowd": 0
-        },
-        {
-            "id": 9,
-            "image_id": 8,
-            "category_id": 1,
-            "bbox": [
-                1515.0,
-                818.0,
-                324.0,
-                135.0
-            ],
-            "area": 43740.0,
-            "iscrowd": 0
-        },
-        {
-            "id": 73,
-            "image_id": 71,
-            "category_id": 0,
-            "bbox": [
-                320.0,
-                1031.0,
-                65.0,
-                33.0
-            ],
-            "area": 2145.0,
-            "iscrowd": 0
-        },
-        {
-            "id": 43,
-            "image_id": 41,
-            "category_id": 1,
-            "bbox": [
-                1038.0,
-                278.0,
-                69.0,
-                58.0
-            ],
-            "area": 4002.0,
-            "iscrowd": 0
-        },
-        {
-            "id": 3,
-            "image_id": 3,
-            "category_id": 1,
-            "bbox": [
-                1256.0,
-                408.0,
-                55.0,
-                147.0
-            ],
-            "area": 8085.0,
-            "iscrowd": 0
-        },
-        {
-            "id": 48,
-            "image_id": 46,
-            "category_id": 1,
-            "bbox": [
-                1001.0,
-                980.0,
-                95.0,
-                84.0
-            ],
-            "area": 7980.0,
-            "iscrowd": 0
-        },
-        {
-            "id": 74,
-            "image_id": 72,
-            "category_id": 0,
-            "bbox": [
-                1032.0,
-                395.0,
-                50.0,
-                29.0
-            ],
-            "area": 1450.0,
-            "iscrowd": 0
-        },
-        {
-            "id": 76,
-            "image_id": 74,
-            "category_id": 0,
-            "bbox": [
-                1802.0,
-                600.0,
-                48.0,
-                42.0
-            ],
-            "area": 2016.0,
-            "iscrowd": 0
-        },
-        {
-            "id": 26,
-            "image_id": 25,
-            "category_id": 1,
-            "bbox": [
-                1467.0,
-                8.0,
-                132.0,
-                71.0
-            ],
-            "area": 9372.0,
-            "iscrowd": 0
-        },
-        {
-            "id": 33,
-            "image_id": 32,
-            "category_id": 1,
-            "bbox": [
-                114.0,
-                673.0,
-                147.0,
-                203.0
-            ],
-            "area": 29841.0,
-            "iscrowd": 0
-        },
-        {
-            "id": 32,
-            "image_id": 31,
-            "category_id": 1,
-            "bbox": [
-                1176.0,
-                0.0,
-                155.0,
-                263.0
-            ],
-            "area": 40765.0,
-            "iscrowd": 0
-        },
-        {
-            "id": 18,
-            "image_id": 17,
-            "category_id": 1,
-            "bbox": [
-                191.0,
-                535.0,
-                41.0,
-                95.0
-            ],
-            "area": 3895.0,
-            "iscrowd": 0
-        },
-        {
-            "id": 30,
-            "image_id": 29,
-            "category_id": 1,
-            "bbox": [
-                735.0,
-                766.0,
-                210.0,
-                284.0
-            ],
-            "area": 59640.0,
-            "iscrowd": 0
-        }
-    ],
-    "categories": [
-        {
-            "id": 0,
-            "name": "Procymbulia",
-            "supercategory": "none"
-        },
-        {
-            "id": 1,
-            "name": "Chiroteuthis calyx",
-            "supercategory": "none"
-        }
-    ],
-    "info": {
-        "description": "Dataset split",
-        "url": "",
-        "version": "1.0",
-        "year": 2025,
-        "contributor": "",
-        "date_created": "2024-01-01"
+  "images": [
+    {
+      "id": 8,
+      "file_name": "bf24dae0-fc12-4ce8-8fd0-12d77095203e_274936.png",
+      "width": 2048,
+      "height": 1080
+    },
+    {
+      "id": 25,
+      "file_name": "1cd3976f-4253-4e07-a57e-2b239064726b_299696.png",
+      "width": 2048,
+      "height": 1080
+    },
+    {
+      "id": 29,
+      "file_name": "1cd3976f-4253-4e07-a57e-2b239064726b_75696.png",
+      "width": 2048,
+      "height": 1080
     }
+  ],
+  "annotations": [
+    {
+      "id": 9,
+      "image_id": 8,
+      "category_id": 1,
+      "bbox": [
+        1515.0,
+        818.0,
+        324.0,
+        135.0
+      ],
+      "area": 43740.0,
+      "iscrowd": 0
+    },
+    {
+      "id": 26,
+      "image_id": 25,
+      "category_id": 1,
+      "bbox": [
+        1467.0,
+        8.0,
+        132.0,
+        71.0
+      ],
+      "area": 9372.0,
+      "iscrowd": 0
+    },
+    {
+      "id": 30,
+      "image_id": 29,
+      "category_id": 1,
+      "bbox": [
+        735.0,
+        766.0,
+        210.0,
+        284.0
+      ],
+      "area": 59640.0,
+      "iscrowd": 0
+    }
+  ],
+  "categories": [
+    {
+      "id": 0,
+      "name": "Procymbulia",
+      "supercategory": "none"
+    },
+    {
+      "id": 1,
+      "name": "Chiroteuthis calyx",
+      "supercategory": "none"
+    }
+  ],
+  "info": {
+    "description": "Dataset split",
+    "url": "",
+    "version": "1.0",
+    "year": 2025,
+    "contributor": "",
+    "date_created": "2024-01-01"
+  }
 }

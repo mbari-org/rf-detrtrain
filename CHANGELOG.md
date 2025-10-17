@@ -2,6 +2,13 @@
 
 
 
+## v0.2.3 (2025-10-17)
+
+### Performance
+
+* perf: enable speed optimized uploads in default aws config ([`4b27ff1`](https://github.com/mbari-org/rf-detrtrain/commit/4b27ff1ca60c3dd7d8c6ee9f967336384a5f8513))
+
+
 ## v0.2.2 (2025-10-17)
 
 ### Fix

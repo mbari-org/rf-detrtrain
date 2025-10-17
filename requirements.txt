@@ -11,3 +11,4 @@ sagemaker>=2.180.0
 
 # Optional: For local testing and development
 awscli>=1.29.0
+tqdm>=4.66.0

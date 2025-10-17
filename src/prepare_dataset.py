@@ -16,6 +16,13 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from collections import defaultdict, Counter
 
+try:
+    from tqdm import tqdm
+except ImportError:
+    # Fallback no-op tqdm if the package is unavailable
+    def tqdm(iterable, *args, **kwargs):
+        return iterable
+
 
 def split(original_coco, images_dirs, output_base, train_ratio=0.75, valid_ratio=0.20, test_ratio=0.05, seed=None):
     """
@@ -47,7 +54,7 @@ def split(original_coco, images_dirs, output_base, train_ratio=0.75, valid_ratio
 
     # Group annotations by image_id
     img_to_anns = defaultdict(list)
-    for ann in annotations:
+    for ann in tqdm(annotations, desc="Index annotations", unit="ann", leave=False):
         img_to_anns[ann["image_id"]].append(ann)
 
     # Shuffle image IDs
@@ -76,8 +83,33 @@ def split(original_coco, images_dirs, output_base, train_ratio=0.75, valid_ratio
         # Filter images and annotations
         split_images = [img for img in images if img["id"] in ids]
         split_anns = []
-        for iid in ids:
+        for iid in tqdm(ids, desc=f"Collect anns ({split_name})", unit="img", leave=False):
             split_anns.extend(img_to_anns[iid])
+
+        # Remove any images (and their annotations) that don't have a corresponding file in images_dirs
+        filtered_split_images = []
+        for img in tqdm(split_images, desc=f"Filter images ({split_name})", unit="img", leave=False):
+            file_found = False
+            for images_dir in images_dirs:
+                potential_src = os.path.join(images_dir, img["file_name"])
+                if os.path.exists(potential_src):
+                    file_found = True
+                    break
+            if file_found:
+                filtered_split_images.append(img)
+            else:
+                print(
+                    f"Info: Skipping image '{img['file_name']}' in '{split_name}' split because file not found in any images directory"
+                )
+
+        if len(filtered_split_images) != len(split_images):
+            removed_count = len(split_images) - len(filtered_split_images)
+            print(f"Removed {removed_count} images without files from '{split_name}' split")
+
+        # Keep only annotations whose image_id remains after filtering
+        kept_image_ids = {img["id"] for img in filtered_split_images}
+        split_anns = [ann for ann in split_anns if ann["image_id"] in kept_image_ids]
+        split_images = filtered_split_images
 
         # Create split COCO data
         split_data = {"images": split_images, "annotations": split_anns, "categories": categories}
@@ -97,7 +129,7 @@ def split(original_coco, images_dirs, output_base, train_ratio=0.75, valid_ratio
 
         # Copy images from appropriate directories
         copied_count = 0
-        for img in split_images:
+        for img in tqdm(split_images, desc=f"Copy images ({split_name})", unit="img", leave=False):
             src = None
             for images_dir in images_dirs:
                 potential_src = os.path.join(images_dir, img["file_name"])
@@ -233,14 +265,7 @@ Examples:
     --coco-json output_coco.json \\
     --images-dir /path/to/images1 --images-dir /path/to/images2 \\
     --output-dir /path/to/dataset \\
-    --train-ratio 0.75 --valid-ratio 0.20 --test-ratio 0.05
-
-  # Full pipeline: VOC to COCO and split
-  python prepare_dataset.py full-pipeline \\
-    --voc-dir /path/to/voc1 --images-dir /path/to/images1 \\
-    --voc-dir /path/to/voc2 --images-dir /path/to/images2 \\
-    --output-dir /path/to/dataset \\
-    --train-ratio 0.75 --valid-ratio 0.20 --test-ratio 0.05
+    --train-ratio 0.75 --valid-ratio 0.20 --test-ratio 0.05 
         """,
     )
 
@@ -271,25 +296,6 @@ Examples:
     split_parser.add_argument("--test-ratio", type=float, default=0.05, help="Test set ratio (default: 0.05)")
     split_parser.add_argument("--seed", type=int, default=None, help="Random seed for reproducibility")
     split_parser.add_argument("--clean", action="store_true", help="Clean output directory before splitting")
-
-    # Full pipeline
-    full_parser = subparsers.add_parser("full-pipeline", help="Convert VOC to COCO and split in one step")
-    full_parser.add_argument(
-        "--voc-dir", action="append", required=True, help="VOC annotation directory (can be specified multiple times)"
-    )
-    full_parser.add_argument(
-        "--images-dir",
-        action="append",
-        required=True,
-        help="Images directory corresponding to each VOC directory (must match order)",
-    )
-    full_parser.add_argument("--output-dir", "-o", required=True, help="Output directory for train/valid/test splits")
-    full_parser.add_argument("--train-ratio", type=float, default=0.75, help="Training set ratio (default: 0.75)")
-    full_parser.add_argument("--valid-ratio", type=float, default=0.20, help="Validation set ratio (default: 0.20)")
-    full_parser.add_argument("--test-ratio", type=float, default=0.05, help="Test set ratio (default: 0.05)")
-    full_parser.add_argument("--seed", type=int, default=None, help="Random seed for reproducibility")
-    full_parser.add_argument("--clean", action="store_true", help="Clean output directory before splitting")
-    full_parser.add_argument("--keep-coco-json", action="store_true", help="Keep intermediate COCO JSON file")
 
     return parser.parse_args()
 
@@ -327,45 +333,6 @@ def main():
             test_ratio=args.test_ratio,
             seed=args.seed,
         )
-
-    elif args.command == "full-pipeline":
-        # Validate that voc-dir and images-dir have same length
-        if len(args.voc_dir) != len(args.images_dir):
-            print("Error: Number of --voc-dir and --images-dir arguments must match")
-            return 1
-
-        # Clean output directory if requested
-        if args.clean and os.path.exists(args.output_dir):
-            print(f"Cleaning output directory: {args.output_dir}")
-            shutil.rmtree(args.output_dir)
-
-        # Create temporary COCO JSON
-        temp_coco_json = os.path.join(args.output_dir, "temp_combined.coco.json")
-        os.makedirs(args.output_dir, exist_ok=True)
-
-        # Step 1: Convert VOC to COCO
-        print("\n=== Step 1: Converting VOC to COCO ===")
-        voc_datasets = list(zip(args.voc_dir, args.images_dir))
-        voc_to_coco(voc_datasets, temp_coco_json)
-
-        # Step 2: Split dataset
-        print("\n=== Step 2: Splitting dataset ===")
-        split(
-            temp_coco_json,
-            args.images_dir,
-            args.output_dir,
-            train_ratio=args.train_ratio,
-            valid_ratio=args.valid_ratio,
-            test_ratio=args.test_ratio,
-            seed=args.seed,
-        )
-
-        # Clean up temporary COCO JSON unless user wants to keep it
-        if not args.keep_coco_json:
-            os.remove(temp_coco_json)
-            print(f"Removed temporary COCO JSON: {temp_coco_json}")
-        else:
-            print(f"Kept intermediate COCO JSON: {temp_coco_json}")
 
     print("\nDone!")
     return 0

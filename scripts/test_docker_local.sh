@@ -7,7 +7,7 @@ set -e
 # Configuration
 IMAGE_NAME="${1:-rfdetr-sagemaker-training}"
 IMAGE_TAG="${2:-latest}"
-LOCAL_DATA_PATH="${3:-/tmp/test_dataset}"
+LOCAL_DATA_PATH="${3:-./test_dataset/sample}"
 LOCAL_OUTPUT_PATH="${4:-/tmp/sagemaker-local/output}"
 LOCAL_MODEL_PATH="${5:-/tmp/sagemaker-local/model}"
 

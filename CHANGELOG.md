@@ -2,6 +2,13 @@
 
 
 
+## v0.2.2 (2025-10-17)
+
+### Fix
+
+* fix: check if s3 bucket available before training ([`91be566`](https://github.com/mbari-org/rf-detrtrain/commit/91be566106eabc0df7d5046b97d67da275b1cdfe))
+
+
 ## v0.2.1 (2025-10-16)
 
 ### Documentation

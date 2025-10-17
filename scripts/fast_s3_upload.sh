@@ -5,7 +5,7 @@
 set -e
 
 # Configuration
-LOCAL_PATH="${1:-/tmp/test_dataset}"
+LOCAL_PATH="${1:-./test_data/sample}"
 S3_BUCKET="${2:-rfdetr-sagemaker-training}"
 S3_PREFIX="${3:-rfdetr/training-data}"
 

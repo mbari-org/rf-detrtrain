@@ -81,8 +81,11 @@ def split(original_coco, images_dir, output_base, train_ratio=0.75, valid_ratio=
         split_dir = os.path.join(output_base, split_name)
         os.makedirs(split_dir, exist_ok=True)
 
+        # Convert to set for O(1) lookups
+        ids_set = set(ids)
+
         # Filter images and annotations
-        split_images = [img for img in images if img["id"] in ids]
+        split_images = [img for img in images if img["id"] in ids_set]
         split_anns = []
         for iid in tqdm(ids, desc=f"Collect anns ({split_name})", unit="img", leave=False):
             split_anns.extend(img_to_anns[iid])
@@ -127,11 +130,11 @@ def split(original_coco, images_dir, output_base, train_ratio=0.75, valid_ratio=
         copied_count = 0
         for img in tqdm(split_images, desc=f"Copy images ({split_name})", unit="img", leave=False):
             src = os.path.join(images_dir, img["file_name"])
-            if os.path.exists(src):
-                dst = os.path.join(split_dir, img["file_name"])
-                shutil.copy(src, dst)
+            dst = os.path.join(split_dir, img["file_name"])
+            try:
+                shutil.copy2(src, dst)  # copy2 is faster and preserves metadata
                 copied_count += 1
-            else:
+            except FileNotFoundError:
                 print(f"Warning: Image {img['file_name']} not found in images directory")
 
         print(
@@ -153,7 +156,7 @@ def voc_to_coco(voc_dir, images_dir, output_json):
     # First, collect all class names from all XML files
     class_names = set()
     xml_files = list(Path(voc_dir).glob("*.xml"))
-    for xml_file in xml_files:
+    for xml_file in tqdm(xml_files, desc="Scanning for categories", unit="file"):
         tree = ET.parse(xml_file)
         root = tree.getroot()
         for obj in root.findall("object"):
@@ -175,6 +178,9 @@ def voc_to_coco(voc_dir, images_dir, output_json):
 
     # Use unique categories (preserving original case)
     categories = sorted(list(class_names))
+    
+    # Create category name to ID mapping for O(1) lookups
+    category_name_to_id = {cat: i for i, cat in enumerate(categories)}
 
     coco_data = {"images": [], "annotations": [], "categories": []}
 
@@ -188,7 +194,7 @@ def voc_to_coco(voc_dir, images_dir, output_json):
     # Get all XML files from VOC dataset
     xml_files = list(Path(voc_dir).glob("*.xml"))
 
-    for xml_file in xml_files:
+    for xml_file in tqdm(xml_files, desc="Converting VOC to COCO", unit="file"):
         tree = ET.parse(xml_file)
         root = tree.getroot()
 
@@ -208,9 +214,9 @@ def voc_to_coco(voc_dir, images_dir, output_json):
             if name_elem is None:
                 continue
             name = name_elem.text
-            if not name or name not in categories:
+            if not name or name not in category_name_to_id:
                 continue
-            cat_id = categories.index(name)
+            cat_id = category_name_to_id[name]  # O(1) lookup instead of O(n)
             bbox = obj.find("bndbox")
             xmin = float(bbox.find("xmin").text)
             ymin = float(bbox.find("ymin").text)
@@ -291,12 +297,14 @@ def combine_coco(coco_json1, coco_json2, output_json):
         cat2_old_to_new[cat["id"]] = category_name_to_id[cat["name"]]
 
     # Combine images with remapped IDs
-    combined_images = []
+    print("Processing images...")
     img1_old_to_new = {}
     img2_old_to_new = {}
+    combined_images = []
     
     next_img_id = 0
-    for img in tqdm(data1.get("images", []), desc="Process images (dataset 1)", unit="img"):
+    images1 = data1.get("images", [])
+    for i, img in enumerate(images1):
         img1_old_to_new[img["id"]] = next_img_id
         combined_images.append({
             "id": next_img_id,
@@ -306,7 +314,8 @@ def combine_coco(coco_json1, coco_json2, output_json):
         })
         next_img_id += 1
     
-    for img in tqdm(data2.get("images", []), desc="Process images (dataset 2)", unit="img"):
+    images2 = data2.get("images", [])
+    for i, img in enumerate(images2):
         img2_old_to_new[img["id"]] = next_img_id
         combined_images.append({
             "id": next_img_id,
@@ -315,12 +324,16 @@ def combine_coco(coco_json1, coco_json2, output_json):
             "height": img.get("height", 0)
         })
         next_img_id += 1
+    
+    print(f"  Processed {len(images1)} + {len(images2)} = {len(combined_images)} images")
 
     # Combine annotations with remapped IDs
+    print("Processing annotations...")
     combined_annotations = []
     next_ann_id = 0
     
-    for ann in tqdm(data1.get("annotations", []), desc="Process annotations (dataset 1)", unit="ann"):
+    anns1 = data1.get("annotations", [])
+    for ann in anns1:
         combined_annotations.append({
             "id": next_ann_id,
             "image_id": img1_old_to_new[ann["image_id"]],
@@ -331,7 +344,8 @@ def combine_coco(coco_json1, coco_json2, output_json):
         })
         next_ann_id += 1
     
-    for ann in tqdm(data2.get("annotations", []), desc="Process annotations (dataset 2)", unit="ann"):
+    anns2 = data2.get("annotations", [])
+    for ann in anns2:
         combined_annotations.append({
             "id": next_ann_id,
             "image_id": img2_old_to_new[ann["image_id"]],
@@ -341,6 +355,8 @@ def combine_coco(coco_json1, coco_json2, output_json):
             "iscrowd": ann.get("iscrowd", 0)
         })
         next_ann_id += 1
+    
+    print(f"  Processed {len(anns1)} + {len(anns2)} = {len(combined_annotations)} annotations")
 
     # Create combined dataset
     combined_data = {

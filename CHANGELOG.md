@@ -2,6 +2,13 @@
 
 
 
+## v0.2.4 (2025-10-17)
+
+### Fix
+
+* fix: add missing model path ([`daeba38`](https://github.com/mbari-org/rf-detrtrain/commit/daeba3811d548496d69097671859ed5117e8df64))
+
+
 ## v0.2.3 (2025-10-17)
 
 ### Performance

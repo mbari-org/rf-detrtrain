@@ -5,6 +5,7 @@ Dataset preparation utilities for RF-DETR training.
 This module provides utilities to:
 1. Convert VOC format datasets to COCO format
 2. Split COCO datasets into train/valid/test sets
+3. Combine two COCO datasets into one
 """
 
 import os
@@ -24,13 +25,13 @@ except ImportError:
         return iterable
 
 
-def split(original_coco, images_dirs, output_base, train_ratio=0.75, valid_ratio=0.20, test_ratio=0.05, seed=None):
+def split(original_coco, images_dir, output_base, train_ratio=0.75, valid_ratio=0.20, test_ratio=0.05, seed=None):
     """
     Split a COCO dataset into train, validation, and test sets.
 
     Args:
         original_coco (str): Path to the original COCO JSON file.
-        images_dirs (list): List of directories containing the images.
+        images_dir (str): Directory containing the images.
         output_base (str): Base directory for output splits (train/valid/test).
         train_ratio (float): Ratio of training data (default: 0.75).
         valid_ratio (float): Ratio of validation data (default: 0.20).
@@ -86,20 +87,15 @@ def split(original_coco, images_dirs, output_base, train_ratio=0.75, valid_ratio
         for iid in tqdm(ids, desc=f"Collect anns ({split_name})", unit="img", leave=False):
             split_anns.extend(img_to_anns[iid])
 
-        # Remove any images (and their annotations) that don't have a corresponding file in images_dirs
+        # Remove any images (and their annotations) that don't have a corresponding file in images_dir
         filtered_split_images = []
         for img in tqdm(split_images, desc=f"Filter images ({split_name})", unit="img", leave=False):
-            file_found = False
-            for images_dir in images_dirs:
-                potential_src = os.path.join(images_dir, img["file_name"])
-                if os.path.exists(potential_src):
-                    file_found = True
-                    break
-            if file_found:
+            potential_src = os.path.join(images_dir, img["file_name"])
+            if os.path.exists(potential_src):
                 filtered_split_images.append(img)
             else:
                 print(
-                    f"Info: Skipping image '{img['file_name']}' in '{split_name}' split because file not found in any images directory"
+                    f"Info: Skipping image '{img['file_name']}' in '{split_name}' split because file not found in images directory"
                 )
 
         if len(filtered_split_images) != len(split_images):
@@ -127,21 +123,16 @@ def split(original_coco, images_dirs, output_base, train_ratio=0.75, valid_ratio
             }
             json.dump(split_data, f, indent=4)
 
-        # Copy images from appropriate directories
+        # Copy images from images directory
         copied_count = 0
         for img in tqdm(split_images, desc=f"Copy images ({split_name})", unit="img", leave=False):
-            src = None
-            for images_dir in images_dirs:
-                potential_src = os.path.join(images_dir, img["file_name"])
-                if os.path.exists(potential_src):
-                    src = potential_src
-                    break
-            if src:
+            src = os.path.join(images_dir, img["file_name"])
+            if os.path.exists(src):
                 dst = os.path.join(split_dir, img["file_name"])
                 shutil.copy(src, dst)
                 copied_count += 1
             else:
-                print(f"Warning: Image {img['file_name']} not found in any images directory")
+                print(f"Warning: Image {img['file_name']} not found in images directory")
 
         print(
             f"Split '{split_name}': {len(split_images)} images, {len(split_anns)} annotations, {copied_count} files copied"
@@ -150,27 +141,27 @@ def split(original_coco, images_dirs, output_base, train_ratio=0.75, valid_ratio
     print("Dataset split completed.")
 
 
-def voc_to_coco(voc_datasets, output_json):
+def voc_to_coco(voc_dir, images_dir, output_json):
     """
-    Combine multiple VOC datasets and convert to COCO format.
+    Convert a VOC dataset to COCO format.
 
     Args:
-        voc_datasets (list of tuples): List of (voc_dir, images_dir) tuples.
+        voc_dir (str): VOC annotation directory.
+        images_dir (str): Images directory.
         output_json (str): Output path for COCO JSON.
     """
     # First, collect all class names from all XML files
     class_names = set()
-    for voc_dir, images_dir in voc_datasets:
-        xml_files = list(Path(voc_dir).glob("*.xml"))
-        for xml_file in xml_files:
-            tree = ET.parse(xml_file)
-            root = tree.getroot()
-            for obj in root.findall("object"):
-                name_elem = obj.find("name")
-                if name_elem is not None:
-                    name = name_elem.text
-                    if name:
-                        class_names.add(name)
+    xml_files = list(Path(voc_dir).glob("*.xml"))
+    for xml_file in xml_files:
+        tree = ET.parse(xml_file)
+        root = tree.getroot()
+        for obj in root.findall("object"):
+            name_elem = obj.find("name")
+            if name_elem is not None:
+                name = name_elem.text
+                if name:
+                    class_names.add(name)
 
     # Flag duplicates using lower case
     lower_names = [name.lower() for name in class_names]
@@ -194,12 +185,10 @@ def voc_to_coco(voc_datasets, output_json):
     img_id = 0
     img_filename_to_id = {}
 
-    # Combine all XML files from all VOC datasets
-    all_xml_files = []
-    for voc_dir, images_dir in voc_datasets:
-        all_xml_files.extend(list(Path(voc_dir).glob("*.xml")))
+    # Get all XML files from VOC dataset
+    xml_files = list(Path(voc_dir).glob("*.xml"))
 
-    for xml_file in all_xml_files:
+    for xml_file in xml_files:
         tree = ET.parse(xml_file)
         root = tree.getroot()
 
@@ -247,6 +236,135 @@ def voc_to_coco(voc_datasets, output_json):
     )
 
 
+def combine_coco(coco_json1, coco_json2, output_json):
+    """
+    Combine two COCO datasets into one.
+
+    Args:
+        coco_json1 (str): Path to first COCO JSON file.
+        coco_json2 (str): Path to second COCO JSON file.
+        output_json (str): Output path for combined COCO JSON.
+    """
+    # Load both datasets
+    with open(coco_json1, "r") as f:
+        data1 = json.load(f)
+    with open(coco_json2, "r") as f:
+        data2 = json.load(f)
+
+    print(f"Dataset 1: {len(data1['images'])} images, {len(data1['annotations'])} annotations, {len(data1['categories'])} categories")
+    print(f"Dataset 2: {len(data2['images'])} images, {len(data2['annotations'])} annotations, {len(data2['categories'])} categories")
+
+    # Merge categories
+    # Create a mapping from category names to new IDs
+    category_name_to_id = {}
+    combined_categories = []
+    
+    # Add categories from first dataset
+    for cat in data1.get("categories", []):
+        if cat["name"] not in category_name_to_id:
+            new_id = len(combined_categories)
+            category_name_to_id[cat["name"]] = new_id
+            combined_categories.append({
+                "id": new_id,
+                "name": cat["name"],
+                "supercategory": cat.get("supercategory", "none")
+            })
+    
+    # Add categories from second dataset (avoiding duplicates)
+    for cat in data2.get("categories", []):
+        if cat["name"] not in category_name_to_id:
+            new_id = len(combined_categories)
+            category_name_to_id[cat["name"]] = new_id
+            combined_categories.append({
+                "id": new_id,
+                "name": cat["name"],
+                "supercategory": cat.get("supercategory", "none")
+            })
+
+    # Create mappings for remapping IDs
+    cat1_old_to_new = {}
+    for cat in data1.get("categories", []):
+        cat1_old_to_new[cat["id"]] = category_name_to_id[cat["name"]]
+    
+    cat2_old_to_new = {}
+    for cat in data2.get("categories", []):
+        cat2_old_to_new[cat["id"]] = category_name_to_id[cat["name"]]
+
+    # Combine images with remapped IDs
+    combined_images = []
+    img1_old_to_new = {}
+    img2_old_to_new = {}
+    
+    next_img_id = 0
+    for img in tqdm(data1.get("images", []), desc="Process images (dataset 1)", unit="img"):
+        img1_old_to_new[img["id"]] = next_img_id
+        combined_images.append({
+            "id": next_img_id,
+            "file_name": img["file_name"],
+            "width": img.get("width", 0),
+            "height": img.get("height", 0)
+        })
+        next_img_id += 1
+    
+    for img in tqdm(data2.get("images", []), desc="Process images (dataset 2)", unit="img"):
+        img2_old_to_new[img["id"]] = next_img_id
+        combined_images.append({
+            "id": next_img_id,
+            "file_name": img["file_name"],
+            "width": img.get("width", 0),
+            "height": img.get("height", 0)
+        })
+        next_img_id += 1
+
+    # Combine annotations with remapped IDs
+    combined_annotations = []
+    next_ann_id = 0
+    
+    for ann in tqdm(data1.get("annotations", []), desc="Process annotations (dataset 1)", unit="ann"):
+        combined_annotations.append({
+            "id": next_ann_id,
+            "image_id": img1_old_to_new[ann["image_id"]],
+            "category_id": cat1_old_to_new[ann["category_id"]],
+            "bbox": ann["bbox"],
+            "area": ann.get("area", 0),
+            "iscrowd": ann.get("iscrowd", 0)
+        })
+        next_ann_id += 1
+    
+    for ann in tqdm(data2.get("annotations", []), desc="Process annotations (dataset 2)", unit="ann"):
+        combined_annotations.append({
+            "id": next_ann_id,
+            "image_id": img2_old_to_new[ann["image_id"]],
+            "category_id": cat2_old_to_new[ann["category_id"]],
+            "bbox": ann["bbox"],
+            "area": ann.get("area", 0),
+            "iscrowd": ann.get("iscrowd", 0)
+        })
+        next_ann_id += 1
+
+    # Create combined dataset
+    combined_data = {
+        "images": combined_images,
+        "annotations": combined_annotations,
+        "categories": combined_categories,
+        "info": {
+            "description": "Combined COCO dataset",
+            "url": "",
+            "version": "1.0",
+            "year": 2025,
+            "contributor": "",
+            "date_created": "2024-01-01"
+        }
+    }
+
+    # Save combined dataset
+    with open(output_json, "w") as f:
+        json.dump(combined_data, f, indent=4)
+
+    print(f"\nCombined dataset: {len(combined_images)} images, {len(combined_annotations)} annotations, {len(combined_categories)} categories")
+    print(f"Saved to: {output_json}")
+
+
 def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
@@ -256,14 +374,20 @@ def parse_args():
 Examples:
   # Convert VOC to COCO
   python prepare_dataset.py voc-to-coco \\
-    --voc-dir /path/to/voc1 --images-dir /path/to/images1 \\
-    --voc-dir /path/to/voc2 --images-dir /path/to/images2 \\
+    --voc-dir /path/to/voc \\
+    --images-dir /path/to/images \\
     --output output_coco.json
+
+  # Combine two COCO datasets
+  python prepare_dataset.py combine \\
+    --coco-json1 dataset1.json \\
+    --coco-json2 dataset2.json \\
+    --output combined.json
 
   # Split COCO dataset
   python prepare_dataset.py split \\
     --coco-json output_coco.json \\
-    --images-dir /path/to/images1 --images-dir /path/to/images2 \\
+    --images-dir /path/to/images \\
     --output-dir /path/to/dataset \\
     --train-ratio 0.75 --valid-ratio 0.20 --test-ratio 0.05 
         """,
@@ -273,23 +397,20 @@ Examples:
 
     # VOC to COCO conversion
     voc_parser = subparsers.add_parser("voc-to-coco", help="Convert VOC format to COCO format")
-    voc_parser.add_argument(
-        "--voc-dir", action="append", required=True, help="VOC annotation directory (can be specified multiple times)"
-    )
-    voc_parser.add_argument(
-        "--images-dir",
-        action="append",
-        required=True,
-        help="Images directory corresponding to each VOC directory (must match order)",
-    )
+    voc_parser.add_argument("--voc-dir", required=True, help="VOC annotation directory")
+    voc_parser.add_argument("--images-dir", required=True, help="Images directory")
     voc_parser.add_argument("--output", "-o", required=True, help="Output COCO JSON file path")
+
+    # Combine COCO datasets
+    combine_parser = subparsers.add_parser("combine", help="Combine two COCO datasets into one")
+    combine_parser.add_argument("--coco-json1", required=True, help="First COCO JSON file")
+    combine_parser.add_argument("--coco-json2", required=True, help="Second COCO JSON file")
+    combine_parser.add_argument("--output", "-o", required=True, help="Output COCO JSON file path")
 
     # Split dataset
     split_parser = subparsers.add_parser("split", help="Split COCO dataset into train/valid/test")
     split_parser.add_argument("--coco-json", required=True, help="Input COCO JSON file")
-    split_parser.add_argument(
-        "--images-dir", action="append", required=True, help="Images directory (can be specified multiple times)"
-    )
+    split_parser.add_argument("--images-dir", required=True, help="Images directory")
     split_parser.add_argument("--output-dir", "-o", required=True, help="Output directory for train/valid/test splits")
     split_parser.add_argument("--train-ratio", type=float, default=0.75, help="Training set ratio (default: 0.75)")
     split_parser.add_argument("--valid-ratio", type=float, default=0.20, help="Validation set ratio (default: 0.20)")
@@ -309,14 +430,10 @@ def main():
         return 1
 
     if args.command == "voc-to-coco":
-        # Validate that voc-dir and images-dir have same length
-        if len(args.voc_dir) != len(args.images_dir):
-            print("Error: Number of --voc-dir and --images-dir arguments must match")
-            return 1
+        voc_to_coco(args.voc_dir, args.images_dir, args.output)
 
-        # Combine into list of tuples
-        voc_datasets = list(zip(args.voc_dir, args.images_dir))
-        voc_to_coco(voc_datasets, args.output)
+    elif args.command == "combine":
+        combine_coco(args.coco_json1, args.coco_json2, args.output)
 
     elif args.command == "split":
         # Clean output directory if requested

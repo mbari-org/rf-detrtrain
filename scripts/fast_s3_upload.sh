@@ -20,20 +20,14 @@ echo "========================================="
 # These settings enable parallel uploads
 export AWS_CLI_FILE_ENCODING=UTF-8
 
-# Set temporary AWS config for this session
-export AWS_CONFIG_FILE=$(mktemp)
-cat > ${AWS_CONFIG_FILE} << EOF
-[default]
-s3 =
-    max_concurrent_requests = 100
-    max_queue_size = 10000
-    multipart_threshold = 64MB
-    multipart_chunksize = 16MB
-    use_accelerate_endpoint = false
-EOF
+# Apply optimized S3 settings
+aws configure set default.s3.max_concurrent_requests 100
+aws configure set default.s3.max_queue_size 10000
+aws configure set default.s3.multipart_threshold 64MB
+aws configure set default.s3.multipart_chunksize 16MB
+aws configure set default.s3.use_accelerate_endpoint false
 
-echo "AWS CLI Configuration (optimized for speed):"
-cat ${AWS_CONFIG_FILE}
+echo "AWS CLI Configuration optimized for speed:"
 echo "========================================="
 
 # Method 1: AWS CLI sync (fastest for many files)

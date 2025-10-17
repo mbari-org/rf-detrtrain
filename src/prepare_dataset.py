@@ -25,13 +25,12 @@ except ImportError:
         return iterable
 
 
-def split(original_coco, images_dir, output_base, train_ratio=0.75, valid_ratio=0.20, test_ratio=0.05, seed=None):
+def split(original_coco, output_base, train_ratio=0.75, valid_ratio=0.20, test_ratio=0.05, seed=None):
     """
     Split a COCO dataset into train, validation, and test sets.
 
     Args:
         original_coco (str): Path to the original COCO JSON file.
-        images_dir (str): Directory containing the images.
         output_base (str): Base directory for output splits (train/valid/test).
         train_ratio (float): Ratio of training data (default: 0.75).
         valid_ratio (float): Ratio of validation data (default: 0.20).
@@ -242,11 +241,12 @@ def voc_to_coco(voc_dir, images_dir, output_json):
     )
 
 
-def combine_coco(coco_json1, coco_json2, output_json):
+def combine_coco(image_dirs, coco_json1, coco_json2, output_json):
     """
     Combine two COCO datasets into one.
 
     Args:
+        image_dirs (list): List of images directories.
         coco_json1 (str): Path to first COCO JSON file.
         coco_json2 (str): Path to second COCO JSON file.
         output_json (str): Output path for combined COCO JSON.
@@ -355,6 +355,15 @@ def combine_coco(coco_json1, coco_json2, output_json):
             "iscrowd": ann.get("iscrowd", 0)
         })
         next_ann_id += 1
+
+    # Copy images from images directory
+    for img in combined_images:
+        for dir in image_dirs:
+            src = os.path.join(dir, img["file_name"])
+            dst = os.path.join(output_json, img["file_name"])
+            if os.path.exists(src): 
+                shutil.copy2(src, dst)
+                break
     
     print(f"  Processed {len(anns1)} + {len(anns2)} = {len(combined_annotations)} annotations")
 
@@ -449,7 +458,7 @@ def main():
         voc_to_coco(args.voc_dir, args.images_dir, args.output)
 
     elif args.command == "combine":
-        combine_coco(args.coco_json1, args.coco_json2, args.output)
+        combine_coco(args.images_dir, args.coco_json1, args.coco_json2, args.output)
 
     elif args.command == "split":
         # Clean output directory if requested
@@ -459,7 +468,6 @@ def main():
 
         split(
             args.coco_json,
-            args.images_dir,
             args.output_dir,
             train_ratio=args.train_ratio,
             valid_ratio=args.valid_ratio,

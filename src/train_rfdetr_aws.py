@@ -119,6 +119,7 @@ def main():
         "epochs": args.epochs,
         "batch_size": args.batch_size,
         "grad_accum_steps": args.grad_accum_steps,
+        "output_dir": args.model_dir,
     }
 
     # Add learning rate if specified

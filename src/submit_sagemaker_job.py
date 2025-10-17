@@ -280,6 +280,16 @@ def main():
 
     # Upload data to S3 if local path provided
     if args.local_data_path:
+        # Check if the s3 bucket exists
+        s3_client = boto3.client("s3")
+        try:
+            s3_client.head_bucket(Bucket=args.s3_bucket)
+        except s3_client.exceptions.ClientError as e:
+            logger.error(f"S3 bucket {args.s3_bucket} does not exist: {e}. Create with: aws s3 mb s3://{args.s3_bucket}")
+            sys.exit(1)
+        logger.info(f"S3 bucket {args.s3_bucket} exists")
+
+        # Upload data to S3
         s3_data_path = upload_data_to_s3(args.local_data_path, args.s3_bucket, args.s3_data_prefix)
         if not s3_data_path:
             logger.error("Failed to upload data to S3")

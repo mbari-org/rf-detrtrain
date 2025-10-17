@@ -37,12 +37,15 @@ RUN python -c "import torch; print(f'PyTorch: {torch.__version__}'); print(f'CUD
 # Copy src module and training script
 COPY src/__init__.py /opt/ml/code/src/__init__.py
 COPY src/train_rfdetr_aws.py /opt/ml/code/train.py
+COPY src/main.py /opt/ml/code/main.py
+COPY src/main.sh /opt/ml/code/main.sh
 
 # Make script executable
 RUN chmod +x /opt/ml/code/train.py
+RUN chmod +x /opt/ml/code/main.sh
 
-# SageMaker runs the container with:
-# docker run image train [--hyperparameter1 value1 --hyperparameter2 value2 ...]
+# Make train.py the default entrypoint for SageMaker.
+# This can be overridden in the Session
 ENV SAGEMAKER_PROGRAM train.py
 
 # Set up SageMaker training directories

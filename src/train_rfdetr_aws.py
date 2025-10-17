@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-AWS SageMaker training script for RF-DETR model on i2map dataset.
+AWS SageMaker training script for RF-DETR model.
 
 SageMaker directory structure:
 - /opt/ml/input/data/training - Input training data
@@ -137,23 +137,7 @@ def main():
         raise
 
     # Save the model to SageMaker's model directory
-    logger.info(f"Saving model to {args.model_dir}")
-    model_output_path = Path(args.model_dir)
-    model_output_path.mkdir(parents=True, exist_ok=True)
-
-    # Note: The actual model saving logic depends on rfdetr's save mechanism
-    # You may need to adjust this based on how rfdetr saves models
-    try:
-        # If rfdetr has a save method:
-        if hasattr(model, "save"):
-            model.save(str(model_output_path))
-        elif hasattr(model, "model") and hasattr(model.model, "save_pretrained"):
-            model.model.save_pretrained(str(model_output_path))
-        logger.info(f"Model saved successfully to {args.model_dir}")
-    except Exception as e:
-        logger.warning(f"Could not save model with standard method: {e}")
-        logger.info("Training completed but model save may need manual handling")
-
+    logger.info(f"Model saved to {args.model_dir}")
     logger.info("Training job completed")
 
 

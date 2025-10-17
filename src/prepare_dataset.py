@@ -423,7 +423,6 @@ Examples:
     # VOC to COCO conversion
     voc_parser = subparsers.add_parser("voc-to-coco", help="Convert VOC format to COCO format")
     voc_parser.add_argument("--voc-dir", required=True, help="VOC annotation directory")
-    voc_parser.add_argument("--images-dir", required=True, help="Images directory")
     voc_parser.add_argument("--output", "-o", required=True, help="Output COCO JSON file path")
 
     # Combine COCO datasets
@@ -431,7 +430,7 @@ Examples:
     combine_parser.add_argument("--coco-json1", required=True, help="First COCO JSON file")
     combine_parser.add_argument("--coco-json2", required=True, help="Second COCO JSON file")
     combine_parser.add_argument("--output", "-o", required=True, help="Output COCO JSON file path")
-
+    combine_parser.add_argument("--images-dir", action="append", required=True, help="Images directory (can be specified multiple times)")
     # Split dataset
     split_parser = subparsers.add_parser("split", help="Split COCO dataset into train/valid/test")
     split_parser.add_argument("--coco-json", required=True, help="Input COCO JSON file")

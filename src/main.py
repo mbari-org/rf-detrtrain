@@ -59,6 +59,7 @@ def parse_args():
     parser.add_argument("--output-data-dir", type=str, default=os.environ.get("SM_OUTPUT_DATA_DIR", "/opt/ml/output"))
 
     # Training hyperparameters
+    parser.add_argument("--resume", type=str, default=None)
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--grad-accum-steps", type=int, default=2)
@@ -127,10 +128,7 @@ def load_hyperparameters():
 def main():
     # Report how many GPUs are available
     if is_main_process():
-        logger.info(f"Number of GPUs available: {torch.cuda.device_count()}")
-
-    # Initialize distributed (if launched with torch.distributed)
-    init_distributed()
+        print(f"Number of GPUs available: {torch.cuda.device_count()}")
 
     # After initializing distributed, configure logging based on rank
     logger = setup_logging()
@@ -142,7 +140,7 @@ def main():
     args = parse_args()
 
     # Determine device for this process
-    device = set_device_from_env() if args.device == "cuda" else torch.device(args.device)
+    device = set_device_from_env()
 
     hyperparameters = load_hyperparameters()
     logger.info(f"Loaded hyperparameters: {hyperparameters}")
@@ -170,6 +168,9 @@ def main():
     }
     if args.learning_rate is not None:
         train_kwargs["learning_rate"] = args.learning_rate
+
+    if args.resume is not None:
+        train_kwargs["resume"] = args.resume
 
     if is_main_process():
         logger.info(f"Starting training with parameters: {json.dumps(train_kwargs, indent=2)}")

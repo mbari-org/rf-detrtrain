@@ -176,7 +176,7 @@ def main():
         "dataset_dir": args.train,
         "epochs": args.epochs,
         "batch_size": args.batch_size,
-        "warmup_epochs", 5,
+        "warmup_epochs": 5,
         "grad_accum_steps": args.grad_accum_steps, # if 2 and 4 GPUS, 2*2 * 4 GPU's = 16 effective batch size
         "output_dir": args.model_dir,
         "early_stopping": True,

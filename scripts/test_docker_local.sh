@@ -50,7 +50,7 @@ cat > /tmp/sagemaker-local/input/config/hyperparameters.json << EOF
     "epochs": "2",
     "batch-size": "2",
     "grad-accum-steps": "1",
-    "model-size": "medium"
+    "model-size": "nano"
 }
 EOF
 
@@ -81,7 +81,6 @@ sleep 2
 # Run the container with SageMaker-like directory structure
 docker run --rm -it \
     --gpus all \
-    -u $(id -u):$(id -g) \
     -v ${LOCAL_DATA_PATH}:/opt/ml/input/data/training \
     -v ${LOCAL_OUTPUT_PATH}:/opt/ml/output \
     -v ${LOCAL_MODEL_PATH}:/opt/ml/model \

@@ -25,13 +25,14 @@ except ImportError:
         return iterable
 
 
-def split(original_coco, output_base, train_ratio=0.75, valid_ratio=0.20, test_ratio=0.05, seed=None):
+def split(original_coco, output_base, images_dir, train_ratio=0.75, valid_ratio=0.20, test_ratio=0.05, seed=None):
     """
     Split a COCO dataset into train, validation, and test sets.
 
     Args:
         original_coco (str): Path to the original COCO JSON file.
         output_base (str): Base directory for output splits (train/valid/test).
+        images_dir (str): Directory with origina images 
         train_ratio (float): Ratio of training data (default: 0.75).
         valid_ratio (float): Ratio of validation data (default: 0.20).
         test_ratio (float): Ratio of test data (default: 0.05).
@@ -143,13 +144,12 @@ def split(original_coco, output_base, train_ratio=0.75, valid_ratio=0.20, test_r
     print("Dataset split completed.")
 
 
-def voc_to_coco(voc_dir, images_dir, output_json):
+def voc_to_coco(voc_dir, output_json):
     """
     Convert a VOC dataset to COCO format.
 
     Args:
         voc_dir (str): VOC annotation directory.
-        images_dir (str): Images directory.
         output_json (str): Output path for COCO JSON.
     """
     # First, collect all class names from all XML files
@@ -198,7 +198,7 @@ def voc_to_coco(voc_dir, images_dir, output_json):
         root = tree.getroot()
 
         # Image info
-        filename = root.find("filename").text
+        filename = root.find("filename").text.replace('.xml','.png')
         width = int(root.find("size/width").text)
         height = int(root.find("size/height").text)
         if filename not in img_filename_to_id:
@@ -356,11 +356,14 @@ def combine_coco(image_dirs, coco_json1, coco_json2, output_json):
         })
         next_ann_id += 1
 
+    image_output_dir = Path(output_json).parent / "images"
+    image_output_dir.mkdir(parents=True, exist_ok=True)
+
     # Copy images from images directory
-    for img in combined_images:
+    for img in tqdm(combined_images, desc=f"Copying images to {image_output_dir}", unit="img", leave=False):
         for dir in image_dirs:
             src = os.path.join(dir, img["file_name"])
-            dst = os.path.join(output_json, img["file_name"])
+            dst = os.path.join(image_output_dir, img["file_name"])
             if os.path.exists(src): 
                 shutil.copy2(src, dst)
                 break
@@ -454,7 +457,7 @@ def main():
         return 1
 
     if args.command == "voc-to-coco":
-        voc_to_coco(args.voc_dir, args.images_dir, args.output)
+        voc_to_coco(args.voc_dir, args.output)
 
     elif args.command == "combine":
         combine_coco(args.images_dir, args.coco_json1, args.coco_json2, args.output)
@@ -468,6 +471,7 @@ def main():
         split(
             args.coco_json,
             args.output_dir,
+            args.images_dir,
             train_ratio=args.train_ratio,
             valid_ratio=args.valid_ratio,
             test_ratio=args.test_ratio,

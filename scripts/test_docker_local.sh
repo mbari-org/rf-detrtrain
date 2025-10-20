@@ -7,7 +7,7 @@ set -e
 # Configuration
 IMAGE_NAME="${1:-rfdetr-sagemaker-training}"
 IMAGE_TAG="${2:-latest}"
-LOCAL_DATA_PATH="${3:-./test_dataset/sample}"
+LOCAL_DATA_PATH="${3:-/tmp/test_dataset/}"
 LOCAL_OUTPUT_PATH="${4:-/tmp/sagemaker-local/output}"
 LOCAL_MODEL_PATH="${5:-/tmp/sagemaker-local/model}"
 
@@ -81,6 +81,7 @@ sleep 2
 # Run the container with SageMaker-like directory structure
 docker run --rm -it \
     --gpus all \
+    -u $(id -u):$(id -g) \
     -v ${LOCAL_DATA_PATH}:/opt/ml/input/data/training \
     -v ${LOCAL_OUTPUT_PATH}:/opt/ml/output \
     -v ${LOCAL_MODEL_PATH}:/opt/ml/model \
@@ -89,7 +90,7 @@ docker run --rm -it \
     -e SM_MODEL_DIR=/opt/ml/model \
     -e SM_OUTPUT_DATA_DIR=/opt/ml/output \
     ${IMAGE_NAME}:${IMAGE_TAG} \
-    python /opt/ml/code/train.py \
+    python /opt/ml/code/main.py \
     --epochs 2 \
     --batch-size 2 \
     --grad-accum-steps 1 \

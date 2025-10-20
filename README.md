@@ -284,15 +284,6 @@ docker run --rm -it \
 # - Run training: python /opt/ml/code/train.py --epochs 1 --batch-size 2
 ```
 
-### Test Without GPU
-
-If you don't have a GPU locally, you can still test the container build and imports:
-
-```bash
-docker run --rm rfdetr-sagemaker-training:latest \
-  python -c "import torch, rfdetr; print('Success!')"
-```
-
 ## Cost Optimization
 
 1. **Use Spot Instances**: In `submit_sagemaker_job.py`, modify the estimator:

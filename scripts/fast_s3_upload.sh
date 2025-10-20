@@ -26,8 +26,10 @@ aws configure set default.s3.max_queue_size 10000
 aws configure set default.s3.multipart_threshold 64MB
 aws configure set default.s3.multipart_chunksize 16MB
 aws configure set default.s3.use_accelerate_endpoint false
+aws configure set default.s3.max_bandwidth 62MB/s
 
-echo "AWS CLI Configuration optimized for speed:"
+echo "AWS CLI Configuration optimized for speed"
+
 echo "========================================="
 
 # Method 1: AWS CLI sync (fastest for many files)

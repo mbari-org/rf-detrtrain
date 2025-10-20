@@ -14,14 +14,13 @@ import logging
 import os
 import sys
 from pathlib import Path
-
+import logging
 import torch
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from rfdetr import RFDETRLarge, RFDETRMedium
+from rfdetr import RFDETRLarge, RFDETRMedium, RFDETRNano
 from src import __version__
-
 
 def is_dist_avail_and_initialized() -> bool:
     return dist.is_available() and dist.is_initialized()
@@ -60,10 +59,10 @@ def parse_args():
 
     # Training hyperparameters
     parser.add_argument("--resume", type=str, default=None)
-    parser.add_argument("--epochs", type=int, default=50)
+    parser.add_argument("--epochs", type=int, default=15)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--grad-accum-steps", type=int, default=2)
-    parser.add_argument("--model-size", type=str, default="large", choices=["large", "medium"])
+    parser.add_argument("--model-size", type=str, default="large", choices=["large", "medium", "nano"])
     parser.add_argument("--learning-rate", type=float, default=None)
 
     return parser.parse_args()
@@ -89,6 +88,17 @@ def init_distributed():
     if dist.is_available() and not dist.is_initialized():
         dist.init_process_group(backend="nccl", init_method="env://")
 
+def init_distributed():
+        """Initialize torch.distributed from environment variables if present.
+        Returns True if initialized, False otherwise.
+        """
+        if not dist.is_available() or dist.is_initialized():
+            return False
+        # Only initialize when launched with torchrun/launch which sets these vars
+        if os.environ.get("RANK") is None or os.environ.get("WORLD_SIZE") is None:
+            return False
+        dist.init_process_group(backend="nccl", init_method="env://")
+        return True
 
 def set_device_from_env():
     """Set CUDA device based on local rank for DDP."""
@@ -113,6 +123,8 @@ def build_model(model_size: str):
         return RFDETRLarge()
     if model_size.lower() == "medium":
         return RFDETRMedium()
+    if model_size.lower() == "nano":
+        return RFDETRNano()
     raise ValueError(f"Unknown model size: {model_size}")
 
 
@@ -133,21 +145,22 @@ def main():
     # After initializing distributed, configure logging based on rank
     logger = setup_logging()
 
+    # Report how many GPUs are available
+    if is_main_process():
+        logger.info(f"Number of GPUs available: {torch.cuda.device_count()}")
+
+
     # Report version and environment from rank 0
     if is_main_process():
         logger.info(f"RF-DETR training wrapper version: {__version__}")
 
     args = parse_args()
 
-    # Determine device for this process
-    device = set_device_from_env()
-
     hyperparameters = load_hyperparameters()
     logger.info(f"Loaded hyperparameters: {hyperparameters}")
     logger.info(f"Command line arguments: {args}")
 
     if is_main_process():
-        logger.info(f"Using device: {device}")
         logger.info(f"Training data location: {args.train}")
         logger.info(f"Model directory: {args.model_dir}") 
         logger.info(f"Output data location: {args.output_data_dir}")
@@ -163,8 +176,17 @@ def main():
         "dataset_dir": args.train,
         "epochs": args.epochs,
         "batch_size": args.batch_size,
-        "grad_accum_steps": args.grad_accum_steps,
+        "warmup_epochs", 5,
+        "grad_accum_steps": args.grad_accum_steps, # if 2 and 4 GPUS, 2*2 * 4 GPU's = 16 effective batch size
         "output_dir": args.model_dir,
+        "early_stopping": True,
+        "lr_scheduler": "cosine",
+        "gradient_checkpointing": False,
+        "eval_interval": 2,  # Run evaluation every 2 epochs
+        "multi_scale":False,
+        "expanded_scales":False,
+        "do_random_resize_via_padding":False,
+        "tensorboard": False
     }
     if args.learning_rate is not None:
         train_kwargs["learning_rate"] = args.learning_rate

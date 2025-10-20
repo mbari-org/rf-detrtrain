@@ -25,7 +25,7 @@ Examples:
   ./run.sh build                              # Build Docker image
   ./run.sh test-gpu                           # Full GPU test
   ./run.sh deploy                             # Build, upload, and submit training
-  ./run.sh upload /tmp/test_dataset           # Upload data to S3
+  ./run.sh upload ./test_data/sample          # Upload data to S3
   ./run.sh setup-role                         # Create IAM role
 
 For more details, see:
@@ -42,7 +42,7 @@ case "${1:-}" in
 
     test-gpu)
         echo "Running local GPU tests..."
-        "${SCRIPT_DIR}/scripts/test_docker_local.sh" rfdetr-sagemaker-training latest /tmp/test_dataset
+        "${SCRIPT_DIR}/scripts/test_docker_local.sh" rfdetr-sagemaker-training latest ./test_data/sample
         ;;
 
     deploy)
@@ -51,7 +51,7 @@ case "${1:-}" in
         ;;
 
     upload)
-        DATA_PATH="${2:-/tmp/test_dataset}"
+        DATA_PATH="${2:-./test_data/sample}"
         echo "Uploading data from ${DATA_PATH}..."
         "${SCRIPT_DIR}/scripts/fast_s3_upload.sh" "${DATA_PATH}" rfdetr-sagemaker-training rfdetr/training-data
         ;;

@@ -8,8 +8,12 @@ FROM 763104351884.dkr.ecr.us-west-2.amazonaws.com/pytorch-training:2.8.0-gpu-py3
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
+    NCCL_DEBUG=INFO \
+    NCCL_P2P_LEVEL=SYS \
+    OMP_NUM_THREADS=4 \
     DEBIAN_FRONTEND=noninteractive \
     PATH="/opt/ml/code:${PATH}"
+
 
 # Install additional system dependencies for OpenCV
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -38,15 +42,14 @@ RUN python -c "import torch; print(f'PyTorch: {torch.__version__}'); print(f'CUD
 COPY src/__init__.py /opt/ml/code/src/__init__.py
 COPY src/train_rfdetr_aws.py /opt/ml/code/train.py
 COPY src/main.py /opt/ml/code/main.py
-COPY src/main.sh /opt/ml/code/main.sh
 
 # Make script executable
 RUN chmod +x /opt/ml/code/train.py
-RUN chmod +x /opt/ml/code/main.sh
+RUN chmod +x /opt/ml/code/main.py
 
 # Make train.py the default entrypoint for SageMaker.
 # This can be overridden in the Session
-ENV SAGEMAKER_PROGRAM train.py
+ENV SAGEMAKER_PROGRAM main.py
 
 # Set up SageMaker training directories
 RUN mkdir -p /opt/ml/model && \

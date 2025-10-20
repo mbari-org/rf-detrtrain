@@ -201,10 +201,11 @@ def submit_training_job(
 
     # Create SageMaker session
     sagemaker_session = sagemaker.Session()
+    distribution = {"torch_distributed": {"enabled": True}}
 
     # Create estimator
     estimator = Estimator(
-        entry_point="src/train_rfdetr_aws.py",
+        entrypoint="main.py",
         image_uri=image_uri,
         role=role_arn,
         instance_count=instance_count,
@@ -216,6 +217,9 @@ def submit_training_job(
         volume_size=volume_size,
         use_spot_instances=False,  # Set to True to use spot instances
         base_job_name="rfdetr-training",
+        distribution=distribution,  # Enable PyTorch DDP for multi-GPU training
+        disable_profiler=True,
+        debugger_hook_config=False
     )
 
     # Start training
@@ -261,8 +265,9 @@ def main():
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--grad-accum-steps", type=int, default=2)
-    parser.add_argument("--model-size", type=str, default="large", choices=["large", "medium"])
+    parser.add_argument("--model-size", type=str, default="large", choices=["large", "medium","nano"])
     parser.add_argument("--learning-rate", type=float)
+    parser.add_argument("--resume", type=str)
 
     args = parser.parse_args()
 
@@ -307,6 +312,9 @@ def main():
     }
     if args.learning_rate:
         hyperparameters["learning-rate"] = args.learning_rate
+
+    if args.resume:
+        hyperparameters["resume"] = args.resume
 
     # Submit training job
     s3_output_path = f"s3://{args.s3_bucket}/{args.s3_output_prefix}"

@@ -13,7 +13,7 @@ import argparse
 import logging
 import boto3
 import sagemaker
-from sagemaker.estimator import Estimator
+from sagemaker.pytorch import PyTorch
 from pathlib import Path
 import subprocess
 import time
@@ -203,9 +203,18 @@ def submit_training_job(
     sagemaker_session = sagemaker.Session()
     distribution = {"torch_distributed": {"enabled": True}}
 
+    # Configure distributed training for multi-GPU support
+    distribution = None
+    if instance_count > 1:
+        # Multi-instance distributed training (data parallel across instances)
+        distribution = {"torch_distributed": {"enabled": True}}
+    else:
+        # Single instance multi-GPU training
+        distribution = {"torch_distributed": {"enabled": True}}
+
     # Create estimator
-    estimator = Estimator(
-        entrypoint="main.py",
+    estimator = PyTorch(
+        entry_point="src/main.py",
         image_uri=image_uri,
         role=role_arn,
         instance_count=instance_count,

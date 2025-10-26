@@ -16,6 +16,7 @@ import json
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from collections import defaultdict, Counter
+from PIL import Image
 
 try:
     from tqdm import tqdm
@@ -90,12 +91,18 @@ def split(original_coco, output_base, images_dir, train_ratio=0.75, valid_ratio=
         for iid in tqdm(ids, desc=f"Collect anns ({split_name})", unit="img", leave=False):
             split_anns.extend(img_to_anns[iid])
 
-        # Remove any images (and their annotations) that don't have a corresponding file in images_dir
+        # Remove any images (and their annotations) that don't have a corresponding file in images_dir or are corrupted
         filtered_split_images = []
         for img in tqdm(split_images, desc=f"Filter images ({split_name})", unit="img", leave=False):
             potential_src = os.path.join(images_dir, img["file_name"])
             if os.path.exists(potential_src):
-                filtered_split_images.append(img)
+                try:
+                    Image.open(potential_src).verify()
+                    filtered_split_images.append(img)
+                except Exception as e:
+                    print(
+                        f"Info: Skipping corrupted image '{img['file_name']}' in '{split_name}' split: {e}"
+                    )
             else:
                 print(
                     f"Info: Skipping image '{img['file_name']}' in '{split_name}' split because file not found in images directory"
@@ -363,8 +370,8 @@ def combine_coco(image_dirs, coco_json1, coco_json2, output_json):
     for img in tqdm(combined_images, desc=f"Copying images to {image_output_dir}", unit="img", leave=False):
         for dir in image_dirs:
             src = os.path.join(dir, img["file_name"])
-            dst = os.path.join(image_output_dir, img["file_name"])
-            if os.path.exists(src): 
+            dst = os.path.join(output_json, img["file_name"])
+            if not os.path.exists(src): 
                 shutil.copy2(src, dst)
                 break
     

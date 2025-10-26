@@ -10,7 +10,6 @@ SageMaker directory structure:
 """
 import argparse
 import json
-import logging
 import os
 import sys
 from pathlib import Path
@@ -88,35 +87,6 @@ def init_distributed():
     if dist.is_available() and not dist.is_initialized():
         dist.init_process_group(backend="nccl", init_method="env://")
 
-def init_distributed():
-        """Initialize torch.distributed from environment variables if present.
-        Returns True if initialized, False otherwise.
-        """
-        if not dist.is_available() or dist.is_initialized():
-            return False
-        # Only initialize when launched with torchrun/launch which sets these vars
-        if os.environ.get("RANK") is None or os.environ.get("WORLD_SIZE") is None:
-            return False
-        dist.init_process_group(backend="nccl", init_method="env://")
-        return True
-
-def set_device_from_env():
-    """Set CUDA device based on local rank for DDP."""
-    if not torch.cuda.is_available():
-        return torch.device("cpu")
-
-    local_rank_str = os.environ.get("LOCAL_RANK")
-    if local_rank_str is None:
-        # Fallback to rank 0 GPU if not launched with torch.distributed.run/launch
-        device = torch.device("cuda:0")
-        torch.cuda.set_device(device)
-        return device
-
-    local_rank = int(local_rank_str)
-    device = torch.device(f"cuda:{local_rank}")
-    torch.cuda.set_device(device)
-    return device
-
 
 def build_model(model_size: str):
     if model_size.lower() == "large":
@@ -145,11 +115,6 @@ def main():
     # After initializing distributed, configure logging based on rank
     logger = setup_logging()
 
-    # Report how many GPUs are available
-    if is_main_process():
-        logger.info(f"Number of GPUs available: {torch.cuda.device_count()}")
-
-
     # Report version and environment from rank 0
     if is_main_process():
         logger.info(f"RF-DETR training wrapper version: {__version__}")
@@ -176,7 +141,7 @@ def main():
         "dataset_dir": args.train,
         "epochs": args.epochs,
         "batch_size": args.batch_size,
-        "warmup_epochs": 5,
+        "warmup_epochs": 3,
         "grad_accum_steps": args.grad_accum_steps, # if 2 and 4 GPUS, 2*2 * 4 GPU's = 16 effective batch size
         "output_dir": args.model_dir,
         "early_stopping": True,
@@ -211,8 +176,11 @@ def main():
 
     # Clean up distributed
     if is_dist_avail_and_initialized():
-        dist.barrier()
-        dist.destroy_process_group()
+        try:
+            dist.barrier()
+            dist.destroy_process_group()
+        except Exception as e:
+            logger.warning(f"Error during distributed cleanup: {e}")
 
 
 if __name__ == "__main__":

@@ -2,6 +2,13 @@
 
 
 
+## v0.3.0 (2025-11-04)
+
+### Feature
+
+* feat: added onnx export ([`922f1b3`](https://github.com/mbari-org/rf-detrtrain/commit/922f1b3eeee8e8a0b2d8e49b68832fd2f1ce575b))
+
+
 ## v0.2.4 (2025-10-17)
 
 ### Fix

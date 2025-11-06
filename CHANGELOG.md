@@ -2,6 +2,13 @@
 
 
 
+## v0.4.1 (2025-11-06)
+
+### Performance
+
+* perf: add cuda device check ([`1307ee3`](https://github.com/mbari-org/rf-detrtrain/commit/1307ee3d3026a1d911bfc841b430636639e45f7f))
+
+
 ## v0.4.0 (2025-11-06)
 
 ### Feature

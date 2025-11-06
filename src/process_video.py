@@ -152,7 +152,7 @@ def main():
     # Load RF-DETR
     detr_model = RFDETRLarge(pretrain_weights=str(Path(args.rfdetr).resolve()))
     detr_model.model.model.to(device)
-    detr_model.optimize_for_inference()
+    #detr_model.optimize_for_inference()
 
     # Load ViT-S
     vits_dir = Path(args.vits).resolve()

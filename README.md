@@ -139,8 +139,6 @@ aws s3 sync /path/to/your/dataset s3://your-bucket/rfdetr/training-data/
 #### Step 3: Submit Training Job Using Python
 
 ```python
-import boto3
-import sagemaker
 from sagemaker.estimator import Estimator
 
 # Configuration

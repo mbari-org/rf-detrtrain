@@ -206,7 +206,7 @@ def main():
             cropped_images = crop_detections(detections_kept, frame)
             cls_ids, cls_confs, cls_names = classify_crops_with_vits(cropped_images, vits_processor, vits_model, device)
 
-            # Ensure alignment
+            # Replace detection classifications with ViTS model
             detections_kept.class_id = cls_ids
             detections_kept.confidence = cls_confs
 

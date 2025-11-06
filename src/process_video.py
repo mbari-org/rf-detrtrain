@@ -49,6 +49,9 @@ def resolve_device() -> torch.device:
     if torch.backends.mps.is_available():
         print("Using device: mps")
         return torch.device("mps")
+    if torch.cuda.is_available():
+        print("Using device: cuda")
+        return torch.device("cuda")
     print("Using device: cpu")
     return torch.device("cpu")
 

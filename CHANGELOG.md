@@ -2,6 +2,13 @@
 
 
 
+## v0.4.0 (2025-11-06)
+
+### Feature
+
+* feat: added process_video.py to test model ([`9809af7`](https://github.com/mbari-org/rf-detrtrain/commit/9809af71ccfbbfee023e5db61e34e9e435ce2c0c))
+
+
 ## v0.3.0 (2025-11-04)
 
 ### Feature

@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 import supervision as sv
 import torch
+from supervision import OverlapMetric
 from transformers import AutoImageProcessor, AutoModelForImageClassification
 
 # Suppress the deprecation warning
@@ -18,7 +19,7 @@ from rfdetr import RFDETRLarge
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Process a video with RF-DETR + ViT-S classification")
     parser.add_argument("--video", required=True, help="Path to input video")
-    parser.add_argument("--rfdetr", required=False, help="Path to RF-DETR weights (.pth)", default="/mnt/DeepSea-AI/models/i2MAP/rfdetr-large-640x640/checkpoint.pth")
+    parser.add_argument("--rfdetr", required=False, help="Path to RF-DETR weights (.pth)", default="/mnt/DeepSea-AI/models/i2MAP/rfdetr-large-640x640/checkpoint_best_total.pth")
     parser.add_argument("--vits", required=False, help="Path to ViT-S model directory (HuggingFace format)", default="/mnt/DeepSea-AI/models/i2MAP/mbari-i2map-vits-b8-20251008/")
     parser.add_argument(
         "--slice",
@@ -41,6 +42,16 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=3,
         help="ByteTrack minimum consecutive frames (default: 3)",
+    )
+    parser.add_argument(
+        "--skip-vits",
+        action="store_true",
+        help="Skip ViT-S classification stage and use only RF-DETR detections",
+    )
+    parser.add_argument(
+        "--class-agnostic",
+        action="store_true",
+        help="Collapse all classes to a single 'marine organism' class with id 0",
     )
     return parser.parse_args()
 
@@ -154,16 +165,22 @@ def main():
     detr_model.model.model.to(device)
     #detr_model.optimize_for_inference()
 
-    # Load ViT-S
-    vits_dir = Path(args.vits).resolve()
-    vits_processor = AutoImageProcessor.from_pretrained(str(vits_dir), return_tensors="pt")
-    vits_model = AutoModelForImageClassification.from_pretrained(str(vits_dir)).to(device)
-
     # COCO id->name mapping next to RF-DETR weights
     id_to_name_detr = load_id_to_name_from_coco_json(args.rfdetr)
     print(f"Loaded {len(id_to_name_detr)} DETR categories")
 
-    id_to_name_vits = vits_model.config.id2label
+    # Load ViT-S (optional)
+    vits_processor = None
+    vits_model = None
+    id_to_name_vits = None
+    if not args.skip_vits:
+        vits_dir = Path(args.vits).resolve()
+        vits_processor = AutoImageProcessor.from_pretrained(str(vits_dir), return_tensors="pt")
+        vits_model = AutoModelForImageClassification.from_pretrained(str(vits_dir)).to(device)
+        id_to_name_vits = vits_model.config.id2label
+        print(f"Loaded ViT-S model with {len(id_to_name_vits)} categories")
+    else:
+        print("Skipping ViT-S classification stage")
 
     cap = cv2.VideoCapture(str(video_path))
     frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -179,7 +196,7 @@ def main():
     def callback(image_slice: np.ndarray) -> sv.Detections:
         return detr_model.predict(image_slice, threshold=args.threshold)
 
-    slicer = sv.InferenceSlicer(callback=callback, slice_wh=(args.slice, args.slice))
+    slicer = sv.InferenceSlicer(callback=callback, slice_wh=(args.slice, args.slice), overlap_metric=OverlapMetric.IOS)
 
     frame_count = 0
     while True:
@@ -191,7 +208,7 @@ def main():
         print(f"Found {len(detections)} detections")
 
         if len(detections) > 0:
-            # Filter edge detections to keep arrays aligned later
+            # Remove edge detections
             h, w, _ = frame.shape
             margin = 5
             mask = (
@@ -202,23 +219,58 @@ def main():
             )
             detections_kept = detections[mask]
 
-            # Track only kept detections
+            # Remove Physonectae class detections
+            if len(detections_kept) > 0:
+                num_before = len(detections_kept)
+                physonectae_mask = np.array([
+                    id_to_name_detr.get(int(class_id), "").lower() != "Physonectae"
+                    for class_id in detections_kept.class_id
+                ])
+                detections_kept = detections_kept[physonectae_mask]
+                num_after = len(detections_kept)
+                print(f"Removed {num_before - num_after} Physonectae detections")
+
+            # Remove overlapping detections
+            detections_kept = detections_kept.with_nms(threshold=0.01, class_agnostic=True)
+
+            # Track cleaned detections
             detections_kept = tracker.update_with_detections(detections_kept)
 
-            # Crop and classify only kept detections
-            cropped_images = crop_detections(detections_kept, frame)
-            cls_ids, cls_confs, cls_names = classify_crops_with_vits(cropped_images, vits_processor, vits_model, device)
+            # Apply class-agnostic mode if enabled
+            if args.class_agnostic and len(detections_kept) > 0:
+                detections_kept.class_id = np.zeros(len(detections_kept), dtype=np.int64)
 
-            # Replace detection classifications with ViTS model
-            detections_kept.class_id = cls_ids
-            detections_kept.confidence = cls_confs
+            # Crop and classify only if ViT-S is enabled
+            if vits_model is not None and not args.class_agnostic:
+                cropped_images = crop_detections(detections_kept, frame)
+                cls_ids, cls_confs, cls_names = classify_crops_with_vits(cropped_images, vits_processor, vits_model, device)
 
-            labels = [
-                f"ID:{tracker_id} {id_to_name_vits.get(int(class_id), 'Unknown')} {confidence:0.2f}"
-                for class_id, confidence, tracker_id in zip(
-                    detections_kept.class_id, detections_kept.confidence, detections_kept.tracker_id
-                )
-            ]
+                # Replace detection classifications with ViTS model
+                detections_kept.class_id = cls_ids
+                detections_kept.confidence = cls_confs
+
+                labels = [
+                    f"ID:{tracker_id} {id_to_name_vits.get(int(class_id), 'Unknown')} {confidence:0.2f}"
+                    for class_id, confidence, tracker_id in zip(
+                        detections_kept.class_id, detections_kept.confidence, detections_kept.tracker_id
+                    )
+                ]
+            elif args.class_agnostic:
+                # Use class-agnostic label
+                labels = [
+                    f"ID:{tracker_id} marine organism {confidence:0.2f}"
+                    for confidence, tracker_id in zip(
+                        detections_kept.confidence, detections_kept.tracker_id
+                    )
+                ]
+            else:
+                # Use RF-DETR classifications
+                labels = [
+                    f"ID:{tracker_id} {id_to_name_detr.get(int(class_id), 'Unknown')} {confidence:0.2f}"
+                    for class_id, confidence, tracker_id in zip(
+                        detections_kept.class_id, detections_kept.confidence, detections_kept.tracker_id
+                    )
+                ]
             frame = box_annotator.annotate(scene=frame, detections=detections_kept)
             frame = label_annotator.annotate(scene=frame, detections=detections_kept, labels=labels)
             print(f"Tracked objects: {len(detections_kept)}")

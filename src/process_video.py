@@ -194,7 +194,8 @@ def main():
     label_annotator = sv.LabelAnnotator()
 
     def callback(image_slice: np.ndarray) -> sv.Detections:
-        return detr_model.predict(image_slice, threshold=args.threshold)
+        image_rgb = cv2.cvtColor(image_slice, cv2.COLOR_BGR2RGB)
+        return detr_model.predict(image_rgb, threshold=args.threshold)
 
     slicer = sv.InferenceSlicer(callback=callback, slice_wh=(args.slice, args.slice), overlap_metric=OverlapMetric.IOS)
 

@@ -2,6 +2,13 @@
 
 
 
+## v0.5.1 (2025-11-10)
+
+### Fix
+
+* fix: correct color conversion for slice ([`478d0f1`](https://github.com/mbari-org/rf-detrtrain/commit/478d0f18268b57a0b305592271db2d3613d163c2))
+
+
 ## v0.5.0 (2025-11-10)
 
 ### Feature

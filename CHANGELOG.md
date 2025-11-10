@@ -2,6 +2,13 @@
 
 
 
+## v0.5.0 (2025-11-10)
+
+### Feature
+
+* feat: improved tracking parameters, remove Physonectae added --class-agnostic flag and --skip-vits ([`f7fb545`](https://github.com/mbari-org/rf-detrtrain/commit/f7fb545e78e7103069899d7e87ce1a9d338e5b2e))
+
+
 ## v0.4.1 (2025-11-06)
 
 ### Performance

@@ -2,6 +2,10 @@
 
 This directory contains the necessary files to train the RF-DETR model on AWS SageMaker.
 
+Example processed video with RF-DETR detections with tracking.
+
+![Video Processing Demo](video_processed.gif)
+
 ## File Structure
 
 ```
@@ -16,6 +20,7 @@ aws/
 │   ├── setup_sagemaker_role.sh  # Create IAM role
 │   ├── fast_s3_upload.sh        # Fast S3 upload
 │   ├── test_docker_local.sh     # Local GPU testing
+│   ├── process_video.sh         # Process video with model
 ├── Dockerfile                    # Container definition
 ├── requirements.txt              # Python dependencies
 ├── README.md                     # This file

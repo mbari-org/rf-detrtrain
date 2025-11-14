@@ -2,6 +2,17 @@
 
 
 
+## v0.5.2 (2025-11-14)
+
+### Documentation
+
+* docs: added sample video ([`ca391e1`](https://github.com/mbari-org/rf-detrtrain/commit/ca391e179a0286da5a58b68c7b3ff5cd56f2b122))
+
+### Performance
+
+* perf: add early stopping and only run eval interval every 5 epochs ([`73bc6bc`](https://github.com/mbari-org/rf-detrtrain/commit/73bc6bcdaddae4692775c624dfd8e1814b624f06))
+
+
 ## v0.5.1 (2025-11-10)
 
 ### Fix

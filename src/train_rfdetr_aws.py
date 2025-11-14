@@ -120,6 +120,8 @@ def main():
         "batch_size": args.batch_size,
         "grad_accum_steps": args.grad_accum_steps,
         "output_dir": args.model_dir,
+        "early_stopping": True,
+        "eval_interval": 5,  # Run evaluation every 5 epochs
     }
 
     # Add learning rate if specified
